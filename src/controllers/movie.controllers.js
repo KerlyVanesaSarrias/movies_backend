@@ -3,10 +3,20 @@ const Movie = require('../models/Movie');
 const Genre = require('../models/Genre');
 const Actor = require('../models/Actor');
 const Director = require('../models/Director');
+const mapToDTO = require('../utils/mapToDto');
 
 const getAll = catchError(async(req, res) => {
     const results = await Movie.findAll({include:[Genre,Actor,Director]});
-    return res.json(results);
+    const movieDTO = results.map((movie) => {
+        const movieDTO = mapToDTO(movie.dataValues);
+        const actorsDTO = movieDTO.actors.map((actor) => mapToDTO(actor.dataValues));
+        const directorsDTO = movieDTO.directors.map((director) => mapToDTO(director.dataValues));
+        const movieMap = {...movieDTO, actors: actorsDTO, directors: directorsDTO};
+        return movieMap;
+    });
+    
+    return res.json(movieDTO);
+
 });
 
 const create = catchError(async(req, res) => {
@@ -58,7 +68,7 @@ const setMoviesActors =  catchError(async(req, res) => {
         await movie.setActors(req.body);
 
         const actors = await movie.getActors();
-        return res.json(actors);
+    return res.json(actors);
 });
 
 const setMoviesDirectors =  catchError(async(req, res) => {
@@ -70,7 +80,7 @@ const setMoviesDirectors =  catchError(async(req, res) => {
         await movie.setDirectors(req.body);
 
         const directors = await movie.getDirectors();
-        return res.json(directors);
+    return res.json(directors);
 });
 module.exports = {
     getAll,
